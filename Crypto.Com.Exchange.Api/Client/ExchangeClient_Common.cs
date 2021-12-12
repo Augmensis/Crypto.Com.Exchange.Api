@@ -16,12 +16,12 @@ namespace Crypto.Com.Exchange.Api.Base
 {
     public partial class ExchangeClient
     { 
-        public async Task<BaseResponse<InstrumentsReponse>> GetInstruments()
+        public async Task<InstrumentsReponse> GetInstruments()
         {
-            return await GetAsync<BaseResponse<InstrumentsReponse>>("public/get-instruments");
+            return await GetAsync<InstrumentsReponse>("public/get-instruments");
         }
 
-        public async Task<BaseResponse<BookResponse>> GetBook(string instrumentName, int? depth)
+        public async Task<BookResponse> GetBook(string instrumentName, int? depth)
         {
             if(string.IsNullOrEmpty(instrumentName) || string.IsNullOrWhiteSpace(instrumentName))
                 throw new ArgumentNullException(nameof(instrumentName));
@@ -29,20 +29,40 @@ namespace Crypto.Com.Exchange.Api.Base
             if(depth > 150) 
                 throw new ArgumentOutOfRangeException(nameof(depth), "Value exceeds Max depth value of 150");
 
-            var builder = new StringBuilder("public/get-book");
-            builder.Append($"?instrument_name={instrumentName}");
+            var builder = new StringBuilder($"?instrument_name={instrumentName}");
+
             if (depth != null)
                 builder.Append($"&depth={depth}");
 
-            return await GetAsync<BaseResponse<BookResponse>>(builder.ToString());
+            return await GetAsync<BookResponse>("public/get-book", builder.ToString());
         }
 
-        public async Task<BaseResponse<CandlestickResponse>> GetCandlestick(string instrumentName, enCandlestickPeriod period)
+        public async Task<CandlestickResponse> GetCandlestick(string instrumentName, enCandlestickPeriod period)
         {
             if (string.IsNullOrEmpty(instrumentName) || string.IsNullOrWhiteSpace(instrumentName))
                 throw new ArgumentNullException(nameof(instrumentName));
 
-            return await GetAsync<BaseResponse<CandlestickResponse>>($"public/get-candlestick?instrument_name={instrumentName}&timeframe={period.GetDescription()}");
+            return await GetAsync<CandlestickResponse>("public/get-candlestick", $"?instrument_name={instrumentName}&timeframe={period.GetDescription()}");
+        }
+
+        public async Task<TickerResponse> GetTicker(string? instrumentName = null)
+        {
+            string args = null;
+
+            if (!string.IsNullOrEmpty(instrumentName) && !string.IsNullOrWhiteSpace(instrumentName))
+                args = $"?instrument_name={instrumentName}";
+
+            return await GetAsync<TickerResponse>("public/get-ticker", args);
+        }
+
+        public async Task<TradeResponse> GetTrades(string? instrumentName = null)
+        {
+            string args = null;
+
+            if (!string.IsNullOrEmpty(instrumentName) && !string.IsNullOrWhiteSpace(instrumentName))
+                args = $"?instrument_name={instrumentName}";
+
+            return await GetAsync<TradeResponse>("public/get-trades", args);
         }
     }
 }
