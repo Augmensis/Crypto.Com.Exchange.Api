@@ -21,12 +21,12 @@ namespace Crypto.Com.Exchange.Api.Consts
         /// <summary>
         /// Sandbox REST API V2 Endpoint
         /// </summary>
-        public const string SBX_REST_V2_ENDPOINT_URL = "https://api.crypto.com/v2/";
+        public const string SBX_REST_V2_ENDPOINT_URL = "https://uat-api.3ona.co/v2/";
 
         /// <summary>
         /// Sandbox REST API V1 Endpoint
         /// </summary>
-        public const string SBX_REST_V1_ENDPOINT_URL = "https://api.crypto.com/v1/";
+        public const string SBX_REST_V1_ENDPOINT_URL = "https://uat-api.3ona.co/v1/";
 
 
         public const string SBX_WSS_V2_USER_ENDPOINT_URL = "wss://uat-stream.3ona.co/v2/user";

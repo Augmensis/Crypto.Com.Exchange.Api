@@ -21,7 +21,7 @@ IConfiguration config = host.Services.GetRequiredService<IConfiguration>();
 var apiConfig = config.GetSection("ApiConfig").Get<ApiConfig>();
 
 // Initialise the client
-var client = new ExchangeClient(apiConfig.ApiKey, apiConfig.ApiSecret, Endpoints.SBX_REST_V2_ENDPOINT_URL);
+var client = new ExchangeClient(apiConfig.ApiKey, apiConfig.ApiSecret, Endpoints.PRD_REST_V2_ENDPOINT_URL);
 
 //// Get available instruments
 //var res = await client.GetInstruments();

@@ -92,6 +92,11 @@ namespace Crypto.Com.Exchange.Api.Base
 
             var res = await _httpClient.PostAsync(requestUri, JsonContent.Create(request, null, _jsonOptions));
             var content = await res.Content.ReadAsStringAsync();
+
+            // UAT throws completely different, undocumented errors for some reason
+            if (content.StartsWith("error code", StringComparison.InvariantCultureIgnoreCase))
+                throw new Exception(content);
+
             var baseResponse = JsonSerializer.Deserialize <BaseResponse<T>>(content, _jsonOptions);
 
             HandleResponseCodes(baseResponse);
