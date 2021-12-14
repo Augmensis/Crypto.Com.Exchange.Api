@@ -11,4 +11,8 @@
     <PackageReference Include="O9d.Json.Formatting" Version="0.1.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Models\Requests\" />
+  </ItemGroup>
+
 </Project>

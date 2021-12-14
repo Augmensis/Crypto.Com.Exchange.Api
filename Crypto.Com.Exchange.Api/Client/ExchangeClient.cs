@@ -1,8 +1,16 @@
-﻿using System.Reflection;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Net;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading.Tasks;
+using System.Web;
+using System.Net.WebSockets;
 using System.Text.Json;
 using O9d.Json.Formatting;
+using System.Net.Http.Json;
 
 namespace Crypto.Com.Exchange.Api.Base
 {
@@ -26,32 +34,27 @@ namespace Crypto.Com.Exchange.Api.Base
             _httpClient.BaseAddress = new Uri(_apiEndpoint);
             _jsonOptions = new JsonSerializerOptions {
                 PropertyNameCaseInsensitive = true,
-                PropertyNamingPolicy = new JsonSnakeCaseNamingPolicy()
+                PropertyNamingPolicy = new JsonSnakeCaseNamingPolicy(),
+                NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString
             };
             InitThrottleDictionary();
         }
 
 
-        protected string GetSignature<T>(BaseRequest<T> request)
+        protected string GetSignature(string requestUri, BaseRequest request)
         {
-            var paramString = string.Empty;
+            var paramString = "";
 
-            if (request.Params != null)
+            if (request != null && request.Params.Any())
             {
-                var paramsDictionary = request.Params.GetType()
-                                                .GetProperties(BindingFlags.Instance | BindingFlags.Public)
-                                                .OrderBy(p => p.Name)
-                                                .ToDictionary(prop => prop.Name, prop => (string?)prop.GetValue(request.Params, null));
-
                 // Ensure the params are alphabetically sorted by key
-                paramString = string.Join("", paramsDictionary.Keys.OrderBy(key => key).Select(key => key + paramsDictionary[key]));
+                paramString = string.Join("", request.Params.Keys.OrderBy(key => key).Select(key => key + request.Params[key]));
             }
 
-            var SigPayload = Encoding.UTF8.GetBytes(request.Method.ToString() + request.Id + _apiKey + paramString + request.Nonce);
+            var sigPayload = Encoding.UTF8.GetBytes(request.Method + request.Id + _apiKey + paramString + request.Nonce);
             var hash = new HMACSHA256(_apiSecretBytes);
-            var ComputedHash = hash.ComputeHash(SigPayload);
-
-            return BitConverter.ToString(ComputedHash);
+            var computedHash = hash.ComputeHash(sigPayload);
+            return BitConverter.ToString(computedHash).Replace("-", "");
         }
 
 
@@ -69,6 +72,36 @@ namespace Crypto.Com.Exchange.Api.Base
             HandleResponseCodes(baseResponse);
 
             return baseResponse.Result;
+        }
+
+        protected async Task<T> PostAsync<T>(string requestUri, BaseRequest? request = null)
+        {
+            ThrottleRequest(requestUri);
+
+            if(request == null)
+            {
+                request = new BaseRequest
+                {
+                    Method = requestUri
+                };
+            }
+
+            request.ApiKey = _apiKey;
+            request.Nonce = GetNonce();
+            request.Sig = GetSignature(requestUri, request);
+
+            var res = await _httpClient.PostAsync(requestUri, JsonContent.Create(request, null, _jsonOptions));
+            var content = await res.Content.ReadAsStringAsync();
+            var baseResponse = JsonSerializer.Deserialize <BaseResponse<T>>(content, _jsonOptions);
+
+            HandleResponseCodes(baseResponse);
+
+            return baseResponse.Result;
+        }
+
+        public static long GetNonce()
+        {
+            return (long)DateTime.UtcNow.Subtract(DateTime.UnixEpoch).TotalMilliseconds - 5;
         }
 
         private void InitThrottleDictionary()
@@ -130,8 +163,11 @@ namespace Crypto.Com.Exchange.Api.Base
                     // Success
                     break;
 
+                case 100001:
+                    throw new Exception(response.ErrorMessage, new Exception("Server error, Likely malformed request. Check ContentType is JSON."));
+
                 case 10001:
-                    throw new Exception(response.Message, new Exception("Malformed Reequest"));
+                    throw new Exception(response.Message, new Exception("Malformed Request"));
 
                 case 10002:
                     throw new Exception(response.Message, new Exception("Not authenticated, or key/signature incorrect"));

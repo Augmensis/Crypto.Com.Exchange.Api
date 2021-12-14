@@ -23,42 +23,51 @@ var apiConfig = config.GetSection("ApiConfig").Get<ApiConfig>();
 // Initialise the client
 var client = new ExchangeClient(apiConfig.ApiKey, apiConfig.ApiSecret, Endpoints.SBX_REST_V2_ENDPOINT_URL);
 
-// Get available instruments
-var res = await client.GetInstruments();
+//// Get available instruments
+//var res = await client.GetInstruments();
 
-foreach (var coinPair in res.Instruments.Take(5))
+//foreach (var coinPair in res.Instruments.Take(5))
+//{
+//    Console.WriteLine($"{coinPair.InstrumentName} {coinPair.QuoteCurrency}/{coinPair.BaseCurrency}");
+
+//    // Get the current 5 levels of this instrument's order book
+//    var bookRes = await client.GetBook(coinPair.InstrumentName, 5);
+//    var minBid = bookRes.Book.BidPrices.MinBy(x => x.Price);
+//    var maxAsk = bookRes.Book.AskPrices.MinBy(x => x.Price);
+//    Console.WriteLine($"Lowest Bid {minBid.Price} @ {minBid.Quantity} # {minBid.NumberOfOrders} - {minBid.TimeStamp}");
+//    Console.WriteLine($"Highest Ask {maxAsk.Price} @ {maxAsk.Quantity} # {maxAsk.NumberOfOrders} - {maxAsk.TimeStamp}");
+
+//    // Get the candlesticks
+//    var candlesticks = await client.GetCandlestick(coinPair.InstrumentName, enCandlestickPeriod.OneHour);
+//    foreach (var data in candlesticks.Data.Take(5))
+//    {
+//        Console.WriteLine($"O:{data.Open} H:{data.High} L: C:{data.Close} T:{data.Timestamp}");
+//    }
+//}
+
+
+//// Get ticker
+//var tickers = await client.GetTicker();
+//foreach (var ticker in tickers.Data.Take(5))
+//{
+//    Console.WriteLine($"{ticker.InstrumentName}: BID:{ticker.Bid} ASK:{ticker.Ask}");
+//}
+
+//// Get trades
+//var trades = await client.GetTrades();
+//foreach (var trade in trades.Data.Take(5))
+//{
+//    Console.WriteLine($"{trade.InstrumentName}: {trade.TradePrice} @ {trade.TradeQuantity}");
+//}
+
+
+// ### SPOT ###
+// Get accounts
+var accs = await client.GetAccountSummary();
+
+foreach (var acc in accs.Accounts.OrderByDescending(x => x.Balance).Take(5))
 {
-    Console.WriteLine($"{coinPair.InstrumentName} {coinPair.QuoteCurrency}/{coinPair.BaseCurrency}");
-
-    // Get the current 5 levels of this instrument's order book
-    var bookRes = await client.GetBook(coinPair.InstrumentName, 5);
-    var minBid = bookRes.Book.BidPrices.MinBy(x => x.Price);
-    var maxAsk = bookRes.Book.AskPrices.MinBy(x => x.Price);
-    Console.WriteLine($"Lowest Bid {minBid.Price} @ {minBid.Quantity} # {minBid.NumberOfOrders} - {minBid.TimeStamp}");
-    Console.WriteLine($"Highest Ask {maxAsk.Price} @ {maxAsk.Quantity} # {maxAsk.NumberOfOrders} - {maxAsk.TimeStamp}");
-
-    // Get the candlesticks
-    var candlesticks = await client.GetCandlestick(coinPair.InstrumentName, enCandlestickPeriod.OneHour);
-    foreach (var data in candlesticks.Data.Take(5))
-    {
-        Console.WriteLine($"O:{data.Open} H:{data.High} L: C:{data.Close} T:{data.Timestamp}");
-    }
+    Console.WriteLine($"{acc.Currency} - Balance:{acc.Balance}");
 }
-
-
-// Get ticker
-var tickers = await client.GetTicker();
-foreach (var ticker in tickers.Data.Take(5))
-{
-    Console.WriteLine($"{ticker.InstrumentName}: BID:{ticker.Bid} ASK:{ticker.Ask}");
-}
-
-// Get trades
-var trades = await client.GetTrades();
-foreach (var trade in trades.Data.Take(5))
-{
-    Console.WriteLine($"{trade.InstrumentName}: {trade.TradePrice} @ {trade.TradeQuantity}");
-}
-
 
 await host.RunAsync();

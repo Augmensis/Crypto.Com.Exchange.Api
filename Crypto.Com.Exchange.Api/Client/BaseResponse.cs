@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace Crypto.Com.Exchange.Api.Base
@@ -29,9 +30,15 @@ namespace Crypto.Com.Exchange.Api.Base
         public int Code { get; set; }
 
         /// <summary>
-        /// (optional) For server or error messages
+        /// (optional) For server messages
         /// </summary>
         public string Message { get; set; }
+
+        /// <summary>
+        /// (optional) For server or error messages
+        /// </summary>
+        [JsonPropertyName("msg")]
+        public string ErrorMessage { get; set; }
 
         /// <summary>
         /// (optional) Original request as a string, for error cases
